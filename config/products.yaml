@@ -1,0 +1,55 @@
+# ShoeScraper product configuration
+# Each product defines what to track and when to alert
+
+products:
+  - label: "Ja Morant Air Force 1 Denim"
+    sku: "IQ9773-400"
+    keywords:
+      - "ja morant"
+      - "air force 1"
+      - "denim"
+    retailers:
+      - nike_au
+      - footlocker_au
+      - subtype
+      - upthere
+      - culturekings
+    alert_rule: any_stock
+
+  - label: "Nike Dunk Low IR0609-100"
+    sku: "IR0609-100"
+    keywords:
+      - "nike dunk low"
+      - "dunk low"
+    retailers:
+      - nike_au
+      - footlocker_au
+      - culturekings
+    alert_rule: discount_only
+
+  # Examples of other rule types for future products:
+  #
+  # - label: "Air Jordan 4 Retro Bred"
+  #   sku: "DV3749-001"
+  #   keywords: ["jordan 4", "bred"]
+  #   retailers: [nike_au, footlocker_au]
+  #   alert_rule: below_price
+  #   alert_threshold: 250.00
+  #
+  # - label: "New Balance 2002R"
+  #   sku: "M2002RHK"
+  #   keywords: ["2002r", "new balance"]
+  #   retailers: [footlocker_au]
+  #   alert_rule: first_markdown
+  #
+  # - label: "Adidas Samba OG"
+  #   sku: "B75806"
+  #   keywords: ["samba", "adidas"]
+  #   retailers: [footlocker_au, culturekings]
+  #   alert_rule: price_dropped
+
+settings:
+  request_timeout: 20
+  sleep_between_requests: 3.0
+  jitter_range: [0.5, 2.0]
+  health_alert_threshold_days: 2
