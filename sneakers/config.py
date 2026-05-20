@@ -7,7 +7,7 @@ from typing import Optional
 
 import yaml
 
-from sneakers.models import ProductConfig
+from sneakers.models import ProductConfig, SourceConfig
 
 
 @dataclass
@@ -27,6 +27,7 @@ class SettingsConfig:
 @dataclass
 class AppConfig:
     products: list[ProductConfig]
+    sources: list[SourceConfig]
     telegram: TelegramConfig
     settings: SettingsConfig
     db_path: str = "sneaker_monitor.db"
@@ -52,6 +53,20 @@ def load_config(config_path: str | Path = "config/products.yaml") -> AppConfig:
                 alert_rule=p.get("alert_rule", "any_stock"),
                 alert_threshold=p.get("alert_threshold"),
                 min_discount_pct=p.get("min_discount_pct"),
+                required_sizes=[str(size) for size in p.get("required_sizes", [])],
+            )
+        )
+
+    sources = []
+    for source in raw.get("sources", []):
+        sources.append(
+            SourceConfig(
+                id=source["id"],
+                name=source["name"],
+                source_type=source.get("source_type", "retail"),
+                search_url=source["search_url"],
+                render_mode=source.get("render_mode", "auto"),
+                parser=source.get("parser", "generic"),
             )
         )
 
@@ -66,6 +81,7 @@ def load_config(config_path: str | Path = "config/products.yaml") -> AppConfig:
 
     return AppConfig(
         products=products,
+        sources=sources,
         telegram=TelegramConfig(
             bot_token=os.getenv("TELEGRAM_BOT_TOKEN"),
             chat_id=os.getenv("TELEGRAM_CHAT_ID"),

@@ -19,6 +19,11 @@ CREATE TABLE IF NOT EXISTS products_seen (
     original_price  REAL,
     currency        TEXT NOT NULL DEFAULT 'AUD',
     is_discounted   INTEGER NOT NULL DEFAULT 0,
+    source_type     TEXT NOT NULL DEFAULT 'retail',
+    condition_type  TEXT NOT NULL DEFAULT 'retail',
+    image_url       TEXT,
+    location        TEXT,
+    availability    TEXT NOT NULL DEFAULT 'possible',
     first_seen_at   TEXT NOT NULL DEFAULT (datetime('now')),
     last_seen_at    TEXT NOT NULL DEFAULT (datetime('now')),
     last_alerted_at TEXT,
@@ -55,7 +60,25 @@ def init_db(conn: sqlite3.Connection) -> None:
     """Create all tables if they don't exist."""
     for schema in (SCHEMA_PRODUCTS_SEEN, SCHEMA_SCRAPE_LOG, SCHEMA_RETAILER_HEALTH):
         conn.execute(schema)
+    _ensure_products_seen_columns(conn)
     conn.commit()
+
+
+def _ensure_products_seen_columns(conn: sqlite3.Connection) -> None:
+    existing = {
+        row[1]
+        for row in conn.execute("PRAGMA table_info(products_seen)").fetchall()
+    }
+    columns = {
+        "source_type": "TEXT NOT NULL DEFAULT 'retail'",
+        "condition_type": "TEXT NOT NULL DEFAULT 'retail'",
+        "image_url": "TEXT",
+        "location": "TEXT",
+        "availability": "TEXT NOT NULL DEFAULT 'possible'",
+    }
+    for name, definition in columns.items():
+        if name not in existing:
+            conn.execute(f"ALTER TABLE products_seen ADD COLUMN {name} {definition}")
 
 
 def get_sighting(
@@ -69,7 +92,8 @@ def get_sighting(
         """
         SELECT id, product_sku, retailer_id, product_url, title,
                sku_found, current_price, original_price, currency,
-               is_discounted, first_seen_at, last_seen_at, last_alerted_at
+               is_discounted, first_seen_at, last_seen_at, last_alerted_at,
+               source_type, condition_type, image_url, location, availability
         FROM products_seen
         WHERE product_sku = ? AND retailer_id = ? AND product_url = ?
         """,
@@ -92,6 +116,11 @@ def upsert_sighting(
     currency: str,
     is_discounted: bool,
     alerted: bool = False,
+    source_type: str = "retail",
+    condition_type: str = "retail",
+    image_url: Optional[str] = None,
+    location: Optional[str] = None,
+    availability: str = "possible",
 ) -> Sighting:
     """
     Insert or update a sighting. Returns the current state.
@@ -106,8 +135,9 @@ def upsert_sighting(
         INSERT INTO products_seen
             (product_sku, retailer_id, product_url, title, sku_found,
              current_price, original_price, currency, is_discounted,
+             source_type, condition_type, image_url, location, availability,
              first_seen_at, last_seen_at, last_alerted_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(product_sku, retailer_id, product_url) DO UPDATE SET
             title = excluded.title,
             sku_found = excluded.sku_found,
@@ -115,12 +145,18 @@ def upsert_sighting(
             original_price = excluded.original_price,
             currency = excluded.currency,
             is_discounted = excluded.is_discounted,
+            source_type = excluded.source_type,
+            condition_type = excluded.condition_type,
+            image_url = excluded.image_url,
+            location = excluded.location,
+            availability = excluded.availability,
             last_seen_at = excluded.last_seen_at
             {alert_fragment}
         """,
         (
             product_sku, retailer_id, product_url, title, sku_found,
             current_price, original_price, currency, int(is_discounted),
+            source_type, condition_type, image_url, location, availability,
             now, now, alert_time,
         ),
     )
@@ -236,6 +272,11 @@ def _row_to_sighting(row: tuple) -> Sighting:
         first_seen_at=_parse_dt(row[10]),
         last_seen_at=_parse_dt(row[11]),
         last_alerted_at=_parse_dt(row[12]),
+        source_type=row[13],
+        condition_type=row[14],
+        image_url=row[15],
+        location=row[16],
+        availability=row[17],
     )
 
 

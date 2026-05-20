@@ -50,6 +50,31 @@ class TestSightingCRUD:
         assert sighting.title == "Ja Morant AF1 Denim"
         assert sighting.is_discounted is False
 
+    def test_insert_marketplace_fields(self, db_conn):
+        sighting = upsert_sighting(
+            conn=db_conn,
+            product_sku="AR4491-700",
+            retailer_id="ebay_au",
+            product_url="https://www.ebay.com.au/itm/123",
+            title="Jordan 9 Retro Wheat US10",
+            sku_found="AR4491-700",
+            current_price=120.0,
+            original_price=None,
+            currency="AUD",
+            is_discounted=False,
+            source_type="second_hand",
+            condition_type="second_hand",
+            image_url="https://img.example/jordan.jpg",
+            location="Sydney, NSW",
+            availability="available",
+        )
+
+        assert sighting.source_type == "second_hand"
+        assert sighting.condition_type == "second_hand"
+        assert sighting.image_url == "https://img.example/jordan.jpg"
+        assert sighting.location == "Sydney, NSW"
+        assert sighting.availability == "available"
+
     def test_get_sighting_not_found(self, db_conn):
         result = get_sighting(db_conn, "FAKE-SKU", "nike_au", "https://fake.url")
         assert result is None

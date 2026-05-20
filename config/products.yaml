@@ -1,5 +1,5 @@
 # ShoeScraper product configuration
-# Each product defines what to track and when to alert
+# Products define what to track. Sources define where to search.
 
 products:
   - label: "Ja Morant Air Force 1 Denim"
@@ -14,6 +14,9 @@ products:
       - subtype
       - upthere
       - culturekings
+      - ebay_au
+      - gumtree_au
+      - facebook_marketplace
     alert_rule: any_stock
 
   - label: "Nike Dunk Low IR0609-100"
@@ -25,28 +28,207 @@ products:
       - nike_au
       - footlocker_au
       - culturekings
+      - ebay_au
+      - gumtree_au
+      - facebook_marketplace
     alert_rule: discount_only
 
-  # Examples of other rule types for future products:
-  #
-  # - label: "Air Jordan 4 Retro Bred"
-  #   sku: "DV3749-001"
-  #   keywords: ["jordan 4", "bred"]
-  #   retailers: [nike_au, footlocker_au]
-  #   alert_rule: below_price
-  #   alert_threshold: 250.00
-  #
-  # - label: "New Balance 2002R"
-  #   sku: "M2002RHK"
-  #   keywords: ["2002r", "new balance"]
-  #   retailers: [footlocker_au]
-  #   alert_rule: first_markdown
-  #
-  # - label: "Adidas Samba OG"
-  #   sku: "B75806"
-  #   keywords: ["samba", "adidas"]
-  #   retailers: [footlocker_au, culturekings]
-  #   alert_rule: price_dropped
+  - label: "Jordan 9 Retro Wheat"
+    sku: "AR4491-700"
+    keywords:
+      - "jordan 9 retro"
+      - "wheat"
+    retailers:
+      - nike_au
+      - footlocker_au
+      - subtype
+      - upthere
+      - culturekings
+      - ebay_au
+      - gumtree_au
+      - facebook_marketplace
+    required_sizes:
+      - "10"
+    alert_rule: any_stock
+
+  - label: "Sideshow Gambit"
+    sku: "Sideshow Gambit"
+    keywords:
+      - "sideshow"
+      - "gambit"
+      - "statue"
+    retailers:
+      - ebay_au
+      - gumtree_au
+      - facebook_marketplace
+    alert_rule: any_stock
+
+  - label: "Sideshow Cyclops"
+    sku: "Sideshow Cyclops"
+    keywords:
+      - "sideshow"
+      - "cyclops"
+      - "statue"
+    retailers:
+      - ebay_au
+      - gumtree_au
+      - facebook_marketplace
+    alert_rule: any_stock
+
+  - label: "Sideshow Nightcrawler"
+    sku: "Sideshow Nightcrawler"
+    keywords:
+      - "sideshow"
+      - "nightcrawler"
+      - "statue"
+    retailers:
+      - ebay_au
+      - gumtree_au
+      - facebook_marketplace
+    alert_rule: any_stock
+
+  - label: "XM Studios Nova"
+    sku: "XM Studios Nova"
+    keywords:
+      - "xm studios"
+      - "nova"
+      - "statue"
+    retailers:
+      - ebay_au
+      - gumtree_au
+      - facebook_marketplace
+    alert_rule: any_stock
+
+  - label: "XM Studios Batman Shogun"
+    sku: "XM Studios Batman Shogun"
+    keywords:
+      - "xm studios"
+      - "batman"
+      - "shogun"
+      - "statue"
+    retailers:
+      - ebay_au
+      - gumtree_au
+      - facebook_marketplace
+    alert_rule: any_stock
+
+  - label: "XM Studios Deathstroke Samurai"
+    sku: "XM Studios Deathstroke Samurai"
+    keywords:
+      - "xm studios"
+      - "deathstroke"
+      - "samurai"
+      - "statue"
+    retailers:
+      - ebay_au
+      - gumtree_au
+      - facebook_marketplace
+    alert_rule: any_stock
+
+  - label: "Scrooge McDuck Statue or Artwork"
+    sku: "Scrooge McDuck statue artwork"
+    keywords:
+      - "scrooge mcduck"
+      - "statue"
+      - "artwork"
+      - "art"
+    retailers:
+      - ebay_au
+      - gumtree_au
+      - facebook_marketplace
+    alert_rule: any_stock
+
+sources:
+  - id: nike_au
+    name: Nike AU
+    source_type: retail
+    search_url: "https://www.nike.com/au/w?q={query}"
+    render_mode: auto
+    parser: generic
+  - id: footlocker_au
+    name: Foot Locker AU
+    source_type: retail
+    search_url: "https://www.footlocker.com.au/en/search?query={query}"
+    render_mode: auto
+    parser: generic
+  - id: jd_sports_au
+    name: JD Sports AU
+    source_type: retail
+    search_url: "https://www.jd-sports.com.au/search?q={query}"
+    render_mode: auto
+    parser: generic
+  - id: platypus
+    name: Platypus Shoes
+    source_type: retail
+    search_url: "https://www.platypusshoes.com.au/search?q={query}"
+    render_mode: auto
+    parser: generic
+  - id: hype_dc
+    name: Hype DC
+    source_type: retail
+    search_url: "https://www.hypedc.com/au/search?q={query}"
+    render_mode: auto
+    parser: generic
+  - id: the_iconic
+    name: THE ICONIC
+    source_type: retail
+    search_url: "https://www.theiconic.com.au/catalog/?q={query}"
+    render_mode: auto
+    parser: generic
+  - id: athletes_foot
+    name: The Athlete's Foot
+    source_type: retail
+    search_url: "https://www.theathletesfoot.com.au/catalogsearch/result/?q={query}"
+    render_mode: auto
+    parser: generic
+  - id: subtype
+    name: Subtype
+    source_type: retail
+    search_url: "https://subtypestore.com/search?q={query}"
+    render_mode: auto
+    parser: generic
+  - id: upthere
+    name: Up There
+    source_type: retail
+    search_url: "https://uptherestore.com/search?q={query}"
+    render_mode: auto
+    parser: generic
+  - id: culturekings
+    name: Culture Kings
+    source_type: retail
+    search_url: "https://www.culturekings.com.au/search?q={query}"
+    render_mode: auto
+    parser: generic
+  - id: supply_store
+    name: Supply Store
+    source_type: retail
+    search_url: "https://supplystore.com.au/search?q={query}"
+    render_mode: auto
+    parser: generic
+  - id: shoegrab
+    name: ShoeGrab
+    source_type: retail
+    search_url: "https://shoegrab.com.au/search?q={query}"
+    render_mode: auto
+    parser: generic
+  - id: ebay_au
+    name: eBay AU
+    source_type: second_hand
+    search_url: "https://www.ebay.com.au/sch/i.html?_nkw={query}&LH_ItemCondition=3000%7C1500%7C2500&LH_PrefLoc=1"
+    render_mode: auto
+    parser: marketplace
+  - id: gumtree_au
+    name: Gumtree AU
+    source_type: second_hand
+    search_url: "https://www.gumtree.com.au/s-sneakers-shoes/{query}/k0"
+    render_mode: auto
+    parser: marketplace
+  - id: facebook_marketplace
+    name: Facebook Marketplace
+    source_type: second_hand
+    search_url: "https://www.facebook.com/marketplace/sydney/search/?query={query}"
+    render_mode: browser
+    parser: marketplace
 
 settings:
   request_timeout: 20

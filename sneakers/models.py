@@ -17,6 +17,12 @@ class RawProduct:
     original_price: Optional[float] = None
     currency: str = "AUD"
     in_stock: Optional[bool] = None
+    source_type: str = "retail"
+    condition_type: str = "retail"
+    image_url: Optional[str] = None
+    location: Optional[str] = None
+    availability: str = "possible"
+    blob: str = ""
 
     @property
     def is_discounted(self) -> bool:
@@ -55,6 +61,19 @@ class ProductConfig:
     alert_rule: str  # "any_stock", "discount_only", "below_price", "first_markdown", "price_dropped"
     alert_threshold: Optional[float] = None  # for below_price rule
     min_discount_pct: Optional[float] = None  # for min_discount_pct rule
+    required_sizes: list[str] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class SourceConfig:
+    """One configured scrape/search source."""
+
+    id: str
+    name: str
+    source_type: str
+    search_url: str
+    render_mode: str = "auto"
+    parser: str = "generic"
 
 
 @dataclass
@@ -74,3 +93,8 @@ class Sighting:
     last_seen_at: Optional[datetime] = None
     last_alerted_at: Optional[datetime] = None
     sku_found: Optional[str] = None
+    source_type: str = "retail"
+    condition_type: str = "retail"
+    image_url: Optional[str] = None
+    location: Optional[str] = None
+    availability: str = "possible"

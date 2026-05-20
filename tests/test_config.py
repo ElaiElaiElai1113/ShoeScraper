@@ -37,3 +37,49 @@ class TestLoadConfig:
         config = load_config("config/products.yaml")
         assert config.products[0].alert_rule == "any_stock"
         assert config.products[1].alert_rule == "discount_only"
+
+    def test_loads_hardcoded_targets_from_yaml(self):
+        config = load_config("config/products.yaml")
+        skus = {product.sku for product in config.products}
+        assert {"IQ9773-400", "IR0609-100", "AR4491-700"} <= skus
+
+    def test_loads_source_definitions(self):
+        config = load_config("config/products.yaml")
+        sources = {source.id: source for source in config.sources}
+
+        assert sources["nike_au"].source_type == "retail"
+        assert sources["nike_au"].render_mode == "auto"
+        assert sources["ebay_au"].source_type == "second_hand"
+        assert sources["gumtree_au"].parser == "marketplace"
+        assert sources["facebook_marketplace"].render_mode == "browser"
+
+    def test_loads_required_sizes(self):
+        config = load_config("config/products.yaml")
+        jordan = next(product for product in config.products if product.sku == "AR4491-700")
+        assert jordan.required_sizes == ["10"]
+
+    def test_loads_collectible_second_hand_targets(self):
+        config = load_config("config/products.yaml")
+        labels = {product.label: product for product in config.products}
+
+        expected = {
+            "Sideshow Gambit",
+            "Sideshow Cyclops",
+            "Sideshow Nightcrawler",
+            "XM Studios Nova",
+            "XM Studios Batman Shogun",
+            "XM Studios Deathstroke Samurai",
+            "Scrooge McDuck Statue or Artwork",
+        }
+        assert expected <= set(labels)
+        for label in expected:
+            assert labels[label].retailers == ["ebay_au", "gumtree_au", "facebook_marketplace"]
+
+    def test_second_hand_sources_are_australia_scoped(self):
+        config = load_config("config/products.yaml")
+        sources = {source.id: source for source in config.sources}
+
+        assert "www.ebay.com.au" in sources["ebay_au"].search_url
+        assert "LH_PrefLoc=1" in sources["ebay_au"].search_url
+        assert "www.gumtree.com.au" in sources["gumtree_au"].search_url
+        assert "facebook.com/marketplace/sydney" in sources["facebook_marketplace"].search_url

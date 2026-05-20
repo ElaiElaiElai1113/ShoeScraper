@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: shoescraper
+    runtime: python
+    buildCommand: pip install -r requirements.txt && python -m playwright install chromium
+    startCommand: python web_app.py
+    envVars:
+      - key: HOST
+        value: 0.0.0.0
+      - key: SHOESCRAPER_OPEN_BROWSER
+        value: "0"
+      - key: SHOESCRAPER_USERNAME
+        sync: false
+      - key: SHOESCRAPER_PASSWORD
+        sync: false

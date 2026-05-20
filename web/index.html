@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ShoeScraper</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Sneaker availability monitor</p>
+          <h1>ShoeScraper</h1>
+          <p class="summary">Search Australian sneaker retailers by shoe name, SKU, or keywords, then check availability and deals from a local browser dashboard.</p>
+        </div>
+        <div class="actions">
+          <button id="scanButton" class="primary" type="button">
+            <span class="icon">▶</span>
+            <span>Run scan</span>
+          </button>
+          <button id="refreshButton" class="secondary" type="button" title="Refresh dashboard">
+            <span class="icon">↻</span>
+            <span>Refresh</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="search-panel">
+        <form id="searchForm" class="search-form">
+          <label class="search-label" for="shoeQuery">Search shoes in Australia</label>
+          <div class="search-row">
+            <input id="shoeQuery" name="shoeQuery" type="search" placeholder="Nike Vomero 5, Jordan 4 Bred, FD9922-001" autocomplete="off">
+            <input id="shoeSize" name="shoeSize" class="size-input" type="text" placeholder="US size" autocomplete="off">
+            <button id="searchButton" class="primary" type="submit">
+              <span class="icon">⌕</span>
+              <span>Search</span>
+            </button>
+          </div>
+          <div class="filter-row">
+            <label class="check-filter">
+              <input id="dealsOnly" type="checkbox">
+              <span>Deals only</span>
+            </label>
+            <label class="check-filter">
+              <input type="radio" name="sourceType" value="all" checked>
+              <span>All sources</span>
+            </label>
+            <label class="check-filter">
+              <input type="radio" name="sourceType" value="retail">
+              <span>Retail</span>
+            </label>
+            <label class="check-filter">
+              <input type="radio" name="sourceType" value="second_hand">
+              <span>Second-hand</span>
+            </label>
+            <div id="retailerFilters" class="retailer-filters"></div>
+          </div>
+        </form>
+        <div class="section-heading search-heading">
+          <h2 id="searchTitle">Search Results</h2>
+          <span id="searchCount" class="count">0</span>
+        </div>
+        <div id="searchResults" class="empty">Search for any shoe name, SKU, or keyword to check supported Australian retailers.</div>
+      </section>
+
+      <section class="status-panel">
+        <div>
+          <span id="statusPill" class="pill idle">Idle</span>
+          <h2 id="statusTitle">Ready to scan</h2>
+          <p id="statusDetail">Click Run scan to check all configured retailers.</p>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-label">
+            <span id="progressText">0 of 0 checks</span>
+            <span id="lastRunText">No scan yet</span>
+          </div>
+          <div class="progress-track">
+            <div id="progressBar" class="progress-bar"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid">
+        <article class="panel products-panel">
+          <div class="section-heading">
+            <h2>Tracked Products</h2>
+            <span id="productCount" class="count">0</span>
+          </div>
+          <div id="products" class="product-list"></div>
+        </article>
+
+        <article class="panel">
+          <div class="section-heading">
+            <h2>New Matches</h2>
+            <span id="matchCount" class="count">0</span>
+          </div>
+          <div id="newMatches" class="empty">No new matches from the latest scan.</div>
+        </article>
+      </section>
+
+      <section class="panel">
+        <div class="section-heading">
+          <h2>Recent Sightings</h2>
+          <span id="sightingCount" class="count">0</span>
+        </div>
+        <div id="sightings" class="sightings empty">No saved sightings yet.</div>
+      </section>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
