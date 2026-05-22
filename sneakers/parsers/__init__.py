@@ -64,6 +64,70 @@ def extract_candidates_from_html(base_url: str, html: str, retailer_id: str, sou
     return _dedupe(products)
 
 
+def extract_nike_candidates(base_url: str, html: str, retailer_id: str) -> list[RawProduct]:
+    soup = BeautifulSoup(html or "", "html.parser")
+    cards = soup.select('[data-testid*="product"], .product-card, .product-grid__card')
+    products: list[RawProduct] = []
+    for card in cards:
+        link = card.find("a", href=True)
+        if not link:
+            continue
+        title = normalize_whitespace(link.get_text(" ", strip=True) or card.get_text(" ", strip=True))
+        if not title:
+            continue
+        blob = normalize_whitespace(card.get_text(" ", strip=True))
+        prices = extract_price_values(blob)
+        image = card.find("img")
+        products.append(
+            RawProduct(
+                retailer_id=retailer_id,
+                title=title[:300],
+                url=urljoin(base_url, link["href"].strip()),
+                current_price=min(prices) if prices else None,
+                original_price=max(prices) if len(prices) > 1 and max(prices) > min(prices) else (prices[0] if prices else None),
+                source_type="retail",
+                condition_type="retail",
+                image_url=image.get("src") if image and image.get("src") else None,
+                availability=infer_availability(blob),
+                blob=blob[:2000],
+            )
+        )
+    return _dedupe(products) or extract_candidates_from_html(base_url, html, retailer_id, "retail")
+
+
+def extract_ebay_candidates(base_url: str, html: str, retailer_id: str) -> list[RawProduct]:
+    soup = BeautifulSoup(html or "", "html.parser")
+    items = soup.select("li.s-item, .s-item")
+    products: list[RawProduct] = []
+    for item in items:
+        link = item.select_one("a.s-item__link[href]") or item.find("a", href=True)
+        if not link:
+            continue
+        title = normalize_whitespace(link.get_text(" ", strip=True))
+        if not title or title.lower() == "shop on ebay":
+            continue
+        blob = normalize_whitespace(item.get_text(" ", strip=True))
+        prices = extract_price_values(blob)
+        image = item.find("img")
+        condition_text = normalize_whitespace((item.select_one(".SECONDARY_INFO") or item).get_text(" ", strip=True))
+        products.append(
+            RawProduct(
+                retailer_id=retailer_id,
+                title=title[:300],
+                url=urljoin(base_url, link["href"].strip()),
+                current_price=min(prices) if prices else None,
+                original_price=max(prices) if len(prices) > 1 and max(prices) > min(prices) else (prices[0] if prices else None),
+                source_type="second_hand",
+                condition_type=_condition_type(condition_text),
+                image_url=image.get("src") if image and image.get("src") else None,
+                location=_find_location(blob),
+                availability="available",
+                blob=blob[:2000],
+            )
+        )
+    return _dedupe(products) or extract_marketplace_candidates(base_url, html, retailer_id)
+
+
 def extract_marketplace_candidates(base_url: str, html: str, retailer_id: str) -> list[RawProduct]:
     products = extract_candidates_from_html(base_url, html, retailer_id, source_type="second_hand")
     soup = BeautifulSoup(html or "", "html.parser")
@@ -104,8 +168,19 @@ def page_requires_login(html: str) -> bool:
 
 def _find_location(text: str) -> str | None:
     cleaned = normalize_whitespace(text)
+    cleaned = re.sub(r"\bfrom\s+", "", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r"\b(?:pre-owned|used|new)\s+", "", cleaned, flags=re.IGNORECASE)
     match = re.search(r"\b[A-Z][A-Za-z .'-]+,\s*(?:NSW|VIC|QLD|WA|SA|TAS|ACT|NT)\b", cleaned)
     return match.group(0) if match else None
+
+
+def _condition_type(text: str) -> str:
+    lowered = text.lower()
+    if "pre-owned" in lowered or "used" in lowered:
+        return "pre_owned"
+    if "new" in lowered:
+        return "new"
+    return "second_hand"
 
 
 def _dedupe(products: Iterable[RawProduct]) -> list[RawProduct]:

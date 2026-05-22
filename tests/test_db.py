@@ -67,6 +67,9 @@ class TestSightingCRUD:
             image_url="https://img.example/jordan.jpg",
             location="Sydney, NSW",
             availability="available",
+            match_score=100,
+            match_confidence="high",
+            matched_terms=["AR4491-700"],
         )
 
         assert sighting.source_type == "second_hand"
@@ -74,6 +77,9 @@ class TestSightingCRUD:
         assert sighting.image_url == "https://img.example/jordan.jpg"
         assert sighting.location == "Sydney, NSW"
         assert sighting.availability == "available"
+        assert sighting.match_score == 100
+        assert sighting.match_confidence == "high"
+        assert sighting.matched_terms == ["AR4491-700"]
 
     def test_get_sighting_not_found(self, db_conn):
         result = get_sighting(db_conn, "FAKE-SKU", "nike_au", "https://fake.url")

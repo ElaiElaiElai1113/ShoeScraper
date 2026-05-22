@@ -29,6 +29,10 @@ input {
   font: inherit;
 }
 
+select {
+  font: inherit;
+}
+
 a {
   color: var(--accent-dark);
   font-weight: 700;
@@ -110,6 +114,19 @@ button {
   cursor: pointer;
 }
 
+.button-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  color: var(--ink);
+  font-size: 0.88rem;
+  font-weight: 900;
+}
+
 button:disabled {
   cursor: not-allowed;
   opacity: 0.62;
@@ -169,7 +186,11 @@ button:disabled {
 }
 
 .search-row input[type="search"],
-.search-row .size-input {
+.search-row .size-input,
+.admin-form input,
+.admin-form select,
+.sighting-filters input,
+.sighting-filters select {
   width: 100%;
   min-height: 48px;
   padding: 0 14px;
@@ -182,9 +203,44 @@ button:disabled {
 }
 
 .search-row input[type="search"]:focus,
-.search-row .size-input:focus {
+.search-row .size-input:focus,
+.admin-form input:focus,
+.admin-form select:focus,
+.sighting-filters input:focus,
+.sighting-filters select:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.14);
+}
+
+.admin-form {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) auto;
+  gap: 10px;
+}
+
+.admin-actions,
+.sighting-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0 16px;
+}
+
+.sighting-filters input,
+.sighting-filters select {
+  width: auto;
+  min-width: 140px;
+  min-height: 38px;
+}
+
+.mini-button {
+  min-height: 26px;
+  padding: 0 8px;
+  border-color: var(--line);
+  background: white;
+  color: var(--muted);
+  font-size: 0.78rem;
+  box-shadow: none;
 }
 
 .filter-row,
@@ -265,6 +321,13 @@ button:disabled {
   color: var(--muted);
 }
 
+.scheduler-text {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
 .progress-wrap {
   min-width: 0;
 }
@@ -334,6 +397,7 @@ button:disabled {
 .product-list,
 .match-list,
 .sighting-list,
+.health-list,
 .result-grid {
   display: grid;
   gap: 12px;
@@ -342,6 +406,7 @@ button:disabled {
 .product,
 .match,
 .sighting,
+.health-item,
 .result-card {
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -525,6 +590,10 @@ button:disabled {
   }
 
   .search-row {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-form {
     grid-template-columns: 1fr;
   }
 

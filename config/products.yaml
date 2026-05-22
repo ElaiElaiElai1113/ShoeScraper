@@ -144,7 +144,7 @@ sources:
     source_type: retail
     search_url: "https://www.nike.com/au/w?q={query}"
     render_mode: auto
-    parser: generic
+    parser: nike
   - id: footlocker_au
     name: Foot Locker AU
     source_type: retail
@@ -216,7 +216,7 @@ sources:
     source_type: second_hand
     search_url: "https://www.ebay.com.au/sch/i.html?_nkw={query}&LH_ItemCondition=3000%7C1500%7C2500&LH_PrefLoc=1"
     render_mode: auto
-    parser: marketplace
+    parser: ebay
   - id: gumtree_au
     name: Gumtree AU
     source_type: second_hand
@@ -235,3 +235,8 @@ settings:
   sleep_between_requests: 3.0
   jitter_range: [0.5, 2.0]
   health_alert_threshold_days: 2
+  scheduler_enabled: false
+  scan_interval_minutes: 60
+  minimum_scan_interval_minutes: 15
+  retry_attempts: 2
+  retry_backoff_seconds: 1.0

@@ -8,13 +8,15 @@ from urllib.parse import quote
 import requests
 
 from sneakers.config import AppConfig, load_config
-from sneakers.db import init_db, record_scrape, upsert_sighting
+from sneakers.db import get_sighting, init_db, record_scrape, upsert_sighting
 from sneakers.fetcher import fetch_source_html
 from sneakers.matcher import product_matches
-from sneakers.models import ProductConfig, RawProduct, SourceConfig
+from sneakers.models import ProductConfig, RawProduct, Sighting, SourceConfig
 from sneakers.parsers import (
+    extract_ebay_candidates,
     extract_candidates_from_html,
     extract_marketplace_candidates,
+    extract_nike_candidates,
     page_requires_login,
 )
 
@@ -79,7 +81,7 @@ def search_products(
             continue
         url = _source_url(source, query)
         try:
-            html = fetch_source_html(source, url, config.settings)
+            html = fetch_with_retries(source, url, config.settings)
             candidates = parse_source(source, url, html)
             record_scrape(conn, source.id, url, True, products_found=len(candidates))
         except Exception as exc:
@@ -109,7 +111,7 @@ def scan_source(
     url: str,
 ) -> list[dict[str, Any]]:
     try:
-        html = fetch_source_html(source, url, config.settings)
+        html = fetch_with_retries(source, url, config.settings)
         if source.id == "facebook_marketplace" and page_requires_login(html):
             raise RuntimeError("Public Facebook Marketplace results require login")
         candidates = parse_source(source, url, html)
@@ -125,6 +127,8 @@ def scan_source(
         match = product_matches(product, candidate)
         if not match.matched:
             continue
+        previous = get_sighting(conn, product.sku, source.id, candidate.url)
+        reason = alert_reason(previous, candidate)
         existing = upsert_sighting(
             conn=conn,
             product_sku=product.sku,
@@ -141,13 +145,49 @@ def scan_source(
             image_url=candidate.image_url,
             location=candidate.location,
             availability=candidate.availability,
+            alerted=reason is not None,
+            match_score=match.score,
+            match_confidence=match.confidence,
+            matched_terms=list(match.matched_terms),
         )
-        if existing and existing.first_seen_at == existing.last_seen_at:
-            hits.append(_scan_hit(product, source, candidate))
+        if existing and reason:
+            hits.append(_scan_hit(product, source, candidate, reason, match))
     return hits
 
 
+def fetch_with_retries(source: SourceConfig, url: str, settings: Any) -> str:
+    attempts = max(1, int(getattr(settings, "retry_attempts", 1)))
+    backoff = float(getattr(settings, "retry_backoff_seconds", 0))
+    last_error: Exception | None = None
+    for attempt in range(1, attempts + 1):
+        try:
+            return fetch_source_html(source, url, settings)
+        except Exception as exc:
+            last_error = exc
+            if attempt < attempts and backoff > 0:
+                time.sleep(backoff * attempt)
+    raise last_error or RuntimeError("Fetch failed")
+
+
+def alert_reason(previous: Sighting | None, candidate: RawProduct) -> str | None:
+    if previous is None:
+        return "new_sighting"
+    if (
+        previous.current_price is not None
+        and candidate.current_price is not None
+        and candidate.current_price < previous.current_price
+    ):
+        return "price_drop"
+    if previous.availability in {"unavailable", "possible"} and candidate.availability == "available":
+        return "available_now"
+    return None
+
+
 def parse_source(source: SourceConfig, url: str, html: str) -> list[RawProduct]:
+    if source.parser == "nike" or source.id == "nike_au":
+        return extract_nike_candidates(url, html, source.id)
+    if source.parser == "ebay" or source.id == "ebay_au":
+        return extract_ebay_candidates(url, html, source.id)
     if source.parser == "marketplace":
         return extract_marketplace_candidates(url, html, source.id)
     return extract_candidates_from_html(url, html, source.id, source.source_type)
@@ -252,6 +292,8 @@ def _size_in_candidate(size: str, candidate: RawProduct) -> bool:
 
 
 def _product_to_result(source: SourceConfig, product: RawProduct, query: str, source_url: str) -> dict[str, Any]:
+    matched_terms = _matched_query_terms(query, product)
+    confidence = _query_confidence(len(matched_terms), max(1, len(query.split())))
     return {
         "title": product.title,
         "retailer": source.name,
@@ -268,18 +310,30 @@ def _product_to_result(source: SourceConfig, product: RawProduct, query: str, so
         "url": product.url,
         "image_url": product.image_url,
         "location": product.location,
-        "matched_terms": 1,
+        "matched_terms": len(matched_terms),
+        "matched_term_values": matched_terms,
         "query_terms": max(1, len(query.split())),
+        "match_confidence": confidence,
         "source_search_url": source_url,
     }
 
 
-def _scan_hit(product: ProductConfig, source: SourceConfig, candidate: RawProduct) -> dict[str, Any]:
+def _scan_hit(
+    product: ProductConfig,
+    source: SourceConfig,
+    candidate: RawProduct,
+    reason: str = "new_sighting",
+    match: Any = None,
+) -> dict[str, Any]:
     return {
         "product": product.label,
         "sku": product.sku,
         "retailer": source.name,
         "retailer_id": source.id,
+        "alert_reason": reason,
+        "match_score": match.score if match else 0,
+        "match_confidence": match.confidence if match else "low",
+        "matched_terms": list(match.matched_terms) if match else [],
         "source_type": candidate.source_type,
         "condition_type": candidate.condition_type,
         "title": candidate.title,
@@ -289,3 +343,17 @@ def _scan_hit(product: ProductConfig, source: SourceConfig, candidate: RawProduc
         "location": candidate.location,
         "availability": candidate.availability,
     }
+
+
+def _matched_query_terms(query: str, candidate: RawProduct) -> list[str]:
+    text = f"{candidate.title} {candidate.sku or ''} {candidate.blob}".lower()
+    terms = [term for term in query.lower().split() if len(term) > 1]
+    return [term for term in terms if term in text]
+
+
+def _query_confidence(matches: int, total: int) -> str:
+    if matches == total and total > 1:
+        return "high"
+    if matches >= max(1, total // 2):
+        return "medium"
+    return "low"

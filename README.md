@@ -30,6 +30,10 @@ Use the **Run scan** button to check all configured products and retailers. The 
 
 Use the search box to look up any shoe name, SKU, or keyword across supported Australian retailers and public second-hand marketplace pages. You can also enter a US shoe size. The results show likely availability, whether the requested size appears on the result page, price signals, deal detection, source type, marketplace location when visible, and direct product links.
 
+The dashboard also shows source health after scans begin, including the last attempt, last success, consecutive failures, and latest error for each source that has been checked.
+
+The Product Admin panel can add or remove tracked products and save the updated product list back to `config/products.yaml`. Recent sightings can be filtered by availability, condition, confidence, and price range, then exported as CSV.
+
 ## Playwright Browser Support
 
 ShoeScraper uses normal HTTP requests first, then falls back to Playwright for sources configured with `render_mode: auto` when static HTML is incomplete. Sources configured with `render_mode: browser`, such as public Facebook Marketplace search pages, use headless Chromium directly.
@@ -42,6 +46,8 @@ Install Python dependencies, then install the Chromium browser once:
 ```
 
 The scraper does not automate marketplace logins or use private sessions. If a public marketplace page requires login, the scan records a source health failure and continues with the other sources.
+
+Nike AU and eBay AU use source-specific parsers for better title, price, image, condition, and location extraction. Other sources continue to use the generic or marketplace parser fallback.
 
 ## Run From Terminal
 
@@ -59,6 +65,23 @@ $env:TELEGRAM_CHAT_ID="your-chat-id"
 ```
 
 Then start the dashboard or terminal scanner.
+
+Alerts are sent for first-time sightings, price drops, and availability changes to available. Gmail SMTP email alerts are planned for a later phase and are not part of the current notification path.
+
+## Scheduled Scans
+
+Scheduled scans are configured in `config/products.yaml` under `settings`:
+
+```yaml
+settings:
+  scheduler_enabled: false
+  scan_interval_minutes: 60
+  minimum_scan_interval_minutes: 15
+  retry_attempts: 2
+  retry_backoff_seconds: 1.0
+```
+
+Keep `scheduler_enabled` set to `false` for manual-only scans. Set it to `true` for the web app to run background scans while the app process is running. The interval is guarded by `minimum_scan_interval_minutes` so accidental very-fast polling is avoided. Failed source fetches retry according to `retry_attempts` and `retry_backoff_seconds` before the source health failure is recorded.
 
 ## Put It On The Web
 

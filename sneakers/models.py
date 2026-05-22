@@ -98,3 +98,6 @@ class Sighting:
     image_url: Optional[str] = None
     location: Optional[str] = None
     availability: str = "possible"
+    match_score: int = 0
+    match_confidence: str = "low"
+    matched_terms: list[str] = field(default_factory=list)

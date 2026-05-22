@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import sqlite3
 from datetime import datetime
 from typing import Optional
@@ -24,6 +25,9 @@ CREATE TABLE IF NOT EXISTS products_seen (
     image_url       TEXT,
     location        TEXT,
     availability    TEXT NOT NULL DEFAULT 'possible',
+    match_score     INTEGER NOT NULL DEFAULT 0,
+    match_confidence TEXT NOT NULL DEFAULT 'low',
+    matched_terms   TEXT NOT NULL DEFAULT '[]',
     first_seen_at   TEXT NOT NULL DEFAULT (datetime('now')),
     last_seen_at    TEXT NOT NULL DEFAULT (datetime('now')),
     last_alerted_at TEXT,
@@ -75,6 +79,9 @@ def _ensure_products_seen_columns(conn: sqlite3.Connection) -> None:
         "image_url": "TEXT",
         "location": "TEXT",
         "availability": "TEXT NOT NULL DEFAULT 'possible'",
+        "match_score": "INTEGER NOT NULL DEFAULT 0",
+        "match_confidence": "TEXT NOT NULL DEFAULT 'low'",
+        "matched_terms": "TEXT NOT NULL DEFAULT '[]'",
     }
     for name, definition in columns.items():
         if name not in existing:
@@ -93,7 +100,8 @@ def get_sighting(
         SELECT id, product_sku, retailer_id, product_url, title,
                sku_found, current_price, original_price, currency,
                is_discounted, first_seen_at, last_seen_at, last_alerted_at,
-               source_type, condition_type, image_url, location, availability
+               source_type, condition_type, image_url, location, availability,
+               match_score, match_confidence, matched_terms
         FROM products_seen
         WHERE product_sku = ? AND retailer_id = ? AND product_url = ?
         """,
@@ -121,6 +129,9 @@ def upsert_sighting(
     image_url: Optional[str] = None,
     location: Optional[str] = None,
     availability: str = "possible",
+    match_score: int = 0,
+    match_confidence: str = "low",
+    matched_terms: list[str] | None = None,
 ) -> Sighting:
     """
     Insert or update a sighting. Returns the current state.
@@ -129,6 +140,7 @@ def upsert_sighting(
     now = datetime.utcnow().isoformat()
     alert_time = now if alerted else None
     alert_fragment = f", last_alerted_at = '{now}'" if alerted else ""
+    matched_terms_json = json.dumps(matched_terms or [])
 
     conn.execute(
         f"""
@@ -136,8 +148,9 @@ def upsert_sighting(
             (product_sku, retailer_id, product_url, title, sku_found,
              current_price, original_price, currency, is_discounted,
              source_type, condition_type, image_url, location, availability,
+             match_score, match_confidence, matched_terms,
              first_seen_at, last_seen_at, last_alerted_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(product_sku, retailer_id, product_url) DO UPDATE SET
             title = excluded.title,
             sku_found = excluded.sku_found,
@@ -150,6 +163,9 @@ def upsert_sighting(
             image_url = excluded.image_url,
             location = excluded.location,
             availability = excluded.availability,
+            match_score = excluded.match_score,
+            match_confidence = excluded.match_confidence,
+            matched_terms = excluded.matched_terms,
             last_seen_at = excluded.last_seen_at
             {alert_fragment}
         """,
@@ -157,6 +173,7 @@ def upsert_sighting(
             product_sku, retailer_id, product_url, title, sku_found,
             current_price, original_price, currency, int(is_discounted),
             source_type, condition_type, image_url, location, availability,
+            match_score, match_confidence, matched_terms_json,
             now, now, alert_time,
         ),
     )
@@ -277,6 +294,9 @@ def _row_to_sighting(row: tuple) -> Sighting:
         image_url=row[15],
         location=row[16],
         availability=row[17],
+        match_score=row[18] if len(row) > 18 else 0,
+        match_confidence=row[19] if len(row) > 19 else "low",
+        matched_terms=_parse_terms(row[20] if len(row) > 20 else None),
     )
 
 
@@ -287,3 +307,15 @@ def _parse_dt(val: Optional[str]) -> Optional[datetime]:
         return datetime.fromisoformat(val)
     except (ValueError, TypeError):
         return None
+
+
+def _parse_terms(val: Optional[str]) -> list[str]:
+    if not val:
+        return []
+    try:
+        parsed = json.loads(val)
+    except (TypeError, ValueError):
+        return []
+    if not isinstance(parsed, list):
+        return []
+    return [str(item) for item in parsed]

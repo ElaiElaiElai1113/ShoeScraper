@@ -1,6 +1,6 @@
 import pytest
 
-from sneakers.config import load_config
+from sneakers.config import load_config, save_products_config
 
 
 class TestLoadConfig:
@@ -14,6 +14,46 @@ class TestLoadConfig:
         config = load_config("config/products.yaml")
         assert config.settings.request_timeout == 20
         assert config.settings.jitter_range == (0.5, 2.0)
+        assert config.settings.scheduler_enabled is False
+        assert config.settings.scan_interval_minutes == 60
+        assert config.settings.minimum_scan_interval_minutes == 15
+
+    def test_loads_scheduler_settings(self, tmp_path):
+        path = tmp_path / "products.yaml"
+        path.write_text(
+            """
+products: []
+sources: []
+settings:
+  scheduler_enabled: true
+  scan_interval_minutes: 30
+  minimum_scan_interval_minutes: 10
+""",
+            encoding="utf-8",
+        )
+
+        config = load_config(path)
+
+        assert config.settings.scheduler_enabled is True
+        assert config.settings.scan_interval_minutes == 30
+        assert config.settings.minimum_scan_interval_minutes == 10
+
+    def test_scan_interval_respects_minimum_guardrail(self, tmp_path):
+        path = tmp_path / "products.yaml"
+        path.write_text(
+            """
+products: []
+sources: []
+settings:
+  scan_interval_minutes: 5
+  minimum_scan_interval_minutes: 15
+""",
+            encoding="utf-8",
+        )
+
+        config = load_config(path)
+
+        assert config.settings.scan_interval_minutes == 15
 
     def test_telegram_from_env(self, monkeypatch):
         monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "test-token")
@@ -83,3 +123,41 @@ class TestLoadConfig:
         assert "LH_PrefLoc=1" in sources["ebay_au"].search_url
         assert "www.gumtree.com.au" in sources["gumtree_au"].search_url
         assert "facebook.com/marketplace/sydney" in sources["facebook_marketplace"].search_url
+
+    def test_save_products_config_preserves_sources_and_settings(self, tmp_path):
+        path = tmp_path / "products.yaml"
+        path.write_text(
+            """
+products: []
+sources:
+  - id: nike_au
+    name: Nike AU
+    source_type: retail
+    search_url: "https://www.nike.com/au/w?q={query}"
+    parser: nike
+settings:
+  scheduler_enabled: true
+  scan_interval_minutes: 30
+""",
+            encoding="utf-8",
+        )
+
+        save_products_config(
+            path,
+            [
+                {
+                    "label": "Nike Vomero 5",
+                    "sku": "FB9149-100",
+                    "keywords": ["vomero", "nike"],
+                    "retailers": ["nike_au"],
+                    "alert_rule": "any_stock",
+                    "required_sizes": ["10"],
+                }
+            ],
+        )
+        config = load_config(path)
+
+        assert config.products[0].label == "Nike Vomero 5"
+        assert config.products[0].required_sizes == ["10"]
+        assert config.sources[0].parser == "nike"
+        assert config.settings.scheduler_enabled is True

@@ -26,6 +26,8 @@ def test_exact_sku_match_scores_highest():
 
     assert result.matched is True
     assert result.score >= 100
+    assert result.confidence == "high"
+    assert "IQ9773-400" in result.matched_terms
 
 
 def test_keyword_match_accepts_second_hand_listing():
@@ -36,7 +38,10 @@ def test_keyword_match_accepts_second_hand_listing():
         url="https://example.test/item",
     )
 
-    assert product_matches(product, candidate).matched is True
+    result = product_matches(product, candidate)
+    assert result.matched is True
+    assert result.confidence == "medium"
+    assert "ja morant" in result.matched_terms
 
 
 def test_unrelated_listing_is_rejected():
