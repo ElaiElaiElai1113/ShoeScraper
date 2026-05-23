@@ -3,7 +3,7 @@ from __future__ import annotations
 import sqlite3
 import time
 from typing import Any
-from urllib.parse import quote
+from urllib.parse import quote, urlparse
 
 import requests
 
@@ -91,6 +91,8 @@ def search_products(
         ranked = []
         for candidate in candidates:
             if not is_australian_result(candidate):
+                continue
+            if not is_listing_result(candidate):
                 continue
             if not _query_matches(query, candidate):
                 continue
@@ -191,6 +193,48 @@ def parse_source(source: SourceConfig, url: str, html: str) -> list[RawProduct]:
     if source.parser == "marketplace":
         return extract_marketplace_candidates(url, html, source.id)
     return extract_candidates_from_html(url, html, source.id, source.source_type)
+
+
+def is_listing_result(candidate: RawProduct) -> bool:
+    title = candidate.title.strip().lower()
+    if not title:
+        return False
+    blocked_titles = {
+        "skip to main content",
+        "men",
+        "women",
+        "kids",
+        "jordan",
+        "sale",
+        "new releases",
+        "shoes",
+        "clothing",
+    }
+    if title in blocked_titles:
+        return False
+
+    path = urlparse(candidate.url).path.lower()
+    listing_markers = (
+        "/itm/",
+        "/au/t/",
+        "/products/",
+        "/product/",
+        "/p/",
+    )
+    if any(marker in path for marker in listing_markers):
+        return True
+
+    search_or_category_markers = (
+        "/search",
+        "/catalog",
+        "/collections/",
+        "/category/",
+        "/au/w",
+    )
+    if any(marker in path for marker in search_or_category_markers):
+        return False
+
+    return bool(candidate.current_price or candidate.image_url) and len(title.split()) >= 3
 
 
 def is_australian_result(candidate: RawProduct) -> bool:
@@ -314,6 +358,7 @@ def _product_to_result(source: SourceConfig, product: RawProduct, query: str, so
         "matched_term_values": matched_terms,
         "query_terms": max(1, len(query.split())),
         "match_confidence": confidence,
+        "result_type": "product" if is_listing_result(product) else "source_search",
         "source_search_url": source_url,
     }
 

@@ -3,7 +3,15 @@ import sqlite3
 from sneakers.config import load_config
 from sneakers.db import get_sighting, upsert_sighting
 from sneakers.models import RawProduct
-from sneakers.service import alert_reason, fetch_with_retries, format_alert, is_australian_result, scan_source, search_products
+from sneakers.service import (
+    alert_reason,
+    fetch_with_retries,
+    format_alert,
+    is_australian_result,
+    is_listing_result,
+    scan_source,
+    search_products,
+)
 
 
 def test_search_products_filters_by_source_type(monkeypatch):
@@ -38,6 +46,39 @@ def test_search_products_filters_by_source_type(monkeypatch):
 
     assert [result["retailer_id"] for result in results] == ["ebay_au"]
     assert results[0]["condition_type"] == "second_hand"
+
+
+def test_search_products_hides_nike_navigation_results(monkeypatch):
+    config = load_config("config/products.yaml")
+
+    def fake_fetch(source, url, settings):
+        return """
+        <nav>
+          <a href="/au/jordan">Jordan</a>
+          <a href="/au/men">Men</a>
+        </nav>
+        <article data-testid="product-card">
+          <a href="/au/t/jordan-9-retro-wheat-shoes-abc123">Jordan 9 Retro Wheat AR4491-700</a>
+          <span>$230.00</span>
+        </article>
+        """
+
+    monkeypatch.setattr("sneakers.service.fetch_source_html", fake_fetch)
+
+    conn = sqlite3.connect(":memory:")
+    conn.row_factory = sqlite3.Row
+    results = search_products(config, conn, "Jordan 9 Retro Wheat", source_ids=["nike_au"])
+
+    assert [result["title"] for result in results] == ["Jordan 9 Retro Wheat AR4491-700"]
+    assert results[0]["result_type"] == "product"
+
+
+def test_is_listing_result_rejects_navigation_and_search_pages():
+    assert not is_listing_result(RawProduct("nike_au", "Jordan", "https://www.nike.com/au/jordan"))
+    assert not is_listing_result(RawProduct("nike_au", "Skip to main content", "https://www.nike.com/au/w?q=jordan"))
+    assert is_listing_result(
+        RawProduct("nike_au", "Jordan 9 Retro Wheat AR4491-700", "https://www.nike.com/au/t/jordan-9-retro-wheat-shoes-abc")
+    )
 
 
 def test_format_alert_includes_marketplace_details():

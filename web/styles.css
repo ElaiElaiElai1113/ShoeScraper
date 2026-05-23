@@ -415,13 +415,21 @@ button:disabled {
 }
 
 .result-grid {
-  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
 }
 
 .result-card {
   display: grid;
-  gap: 11px;
+  gap: 12px;
   align-content: start;
+  min-height: 220px;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.result-card:hover {
+  border-color: #b9c7d6;
+  box-shadow: 0 14px 30px rgba(24, 32, 42, 0.08);
+  transform: translateY(-1px);
 }
 
 .result-image {
@@ -476,14 +484,35 @@ button:disabled {
 
 .result-card h3 {
   margin: 0;
-  font-size: 1rem;
+  font-size: 1.05rem;
   line-height: 1.35;
+}
+
+.result-card h3 a {
+  color: var(--ink);
+}
+
+.result-card h3 a:hover {
+  color: var(--accent-dark);
 }
 
 .price {
   color: var(--ink);
-  font-size: 1.28rem;
+  font-size: 1.35rem;
   font-weight: 950;
+}
+
+.price-stack {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.price-muted {
+  color: var(--muted);
+  font-size: 0.95rem;
+  font-weight: 850;
 }
 
 .was-price {
@@ -501,6 +530,31 @@ button:disabled {
 .deal-badge.deal {
   color: var(--amber);
   background: #fef3c7;
+}
+
+.result-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 2px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  font-size: 0.88rem;
+}
+
+.listing-link {
+  color: white;
+  background: var(--accent);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-weight: 900;
+}
+
+.listing-link:hover {
+  background: var(--accent-dark);
+  color: white;
+  text-decoration: none;
 }
 
 .error-text {

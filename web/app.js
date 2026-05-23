@@ -176,7 +176,6 @@ function renderSearchResults(results, query) {
 
   searchResults.className = "result-grid";
   searchResults.innerHTML = results.map((result) => {
-    const dealClass = result.is_deal ? "deal" : "";
     const wasPrice = result.was_price ? `<span class="was-price">${formatMoney(result.was_price)}</span>` : "";
     const sourceBadge = result.source_type === "second_hand" ? `<span class="tag alert">Second-hand</span>` : `<span class="tag">Retail</span>`;
     const location = result.location ? `<span class="tag">${escapeHtml(result.location)}</span>` : "";
@@ -184,6 +183,13 @@ function renderSearchResults(results, query) {
     const confidence = result.query_terms
       ? `${result.matched_terms}/${result.query_terms} terms`
       : `${result.matched_terms} terms`;
+    const priceBlock = result.price === null || result.price === undefined
+      ? `<div class="price-muted">Price not shown</div>`
+      : `<div class="price-stack"><span class="price">${formatMoney(result.price)}</span>${wasPrice}</div>`;
+    const dealBadge = result.is_deal ? `<span class="deal-badge deal">Deal detected</span>` : "";
+    const terms = result.matched_term_values && result.matched_term_values.length
+      ? `<span class="tag">Matched ${escapeHtml(result.matched_term_values.join(", "))}</span>`
+      : `<span class="tag">${escapeHtml(confidence)}</span>`;
     return `
       <article class="result-card">
         ${image}
@@ -193,17 +199,19 @@ function renderSearchResults(results, query) {
         </div>
         <h3><a href="${escapeHtml(result.url)}" target="_blank" rel="noreferrer">${escapeHtml(result.title)}</a></h3>
         <div class="price-row">
-          <span class="price">${formatMoney(result.price)}</span>
-          ${wasPrice}
-          <span class="deal-badge ${dealClass}">${result.is_deal ? "Deal detected" : "No deal signal"}</span>
+          ${priceBlock}
+          ${dealBadge}
         </div>
         <div class="meta">
           ${sourceBadge}
-          <span class="tag">${escapeHtml(confidence)}</span>
+          ${terms}
           <span class="tag ${result.match_confidence === "high" ? "alert" : ""}">${escapeHtml(result.match_confidence || "low")} confidence</span>
           ${location}
           ${result.requested_size ? `<span class="tag ${result.size_match === "found" ? "alert" : ""}">US ${escapeHtml(result.requested_size)} ${result.size_match === "found" ? "found" : "not shown"}</span>` : ""}
-          <a href="${escapeHtml(result.source_search_url)}" target="_blank" rel="noreferrer">Retailer search</a>
+        </div>
+        <div class="result-actions">
+          <a class="listing-link" href="${escapeHtml(result.url)}" target="_blank" rel="noreferrer">View listing</a>
+          <a href="${escapeHtml(result.source_search_url)}" target="_blank" rel="noreferrer">Source search</a>
         </div>
       </article>
     `;
