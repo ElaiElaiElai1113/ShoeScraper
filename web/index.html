@@ -84,23 +84,41 @@
 
       <section class="panel">
         <div class="section-heading">
-          <h2>Product Admin</h2>
-          <span id="adminStatus" class="count">Edit</span>
+          <div>
+            <h2>Product Admin</h2>
+            <p class="section-note">Add products to the watchlist, then save the list.</p>
+          </div>
+          <span id="adminStatus" class="status-chip">Ready</span>
         </div>
         <form id="productAdminForm" class="admin-form">
-          <input id="adminLabel" type="text" placeholder="Product label">
-          <input id="adminSku" type="text" placeholder="SKU or search key">
-          <input id="adminKeywords" type="text" placeholder="Keywords, comma separated">
-          <input id="adminSizes" type="text" placeholder="Required sizes, comma separated">
-          <select id="adminAlertRule">
-            <option value="any_stock">Any stock</option>
-            <option value="discount_only">Discount only</option>
-          </select>
-          <button class="secondary" type="submit">Add product</button>
+          <label>
+            <span>Product label</span>
+            <input id="adminLabel" type="text" placeholder="Jordan 9 Retro Wheat">
+          </label>
+          <label>
+            <span>SKU or search key</span>
+            <input id="adminSku" type="text" placeholder="AR4491-700">
+          </label>
+          <label class="wide-field">
+            <span>Keywords</span>
+            <input id="adminKeywords" type="text" placeholder="jordan 9, wheat, retro">
+          </label>
+          <label>
+            <span>Required sizes</span>
+            <input id="adminSizes" type="text" placeholder="10, 10.5">
+          </label>
+          <label>
+            <span>Alert rule</span>
+            <select id="adminAlertRule">
+              <option value="any_stock">Any stock</option>
+              <option value="discount_only">Discount only</option>
+            </select>
+          </label>
+          <div class="form-actions">
+            <button class="secondary" type="submit">Add product</button>
+            <button id="saveProductsButton" class="primary" type="button">Save products</button>
+          </div>
         </form>
-        <div class="admin-actions">
-          <button id="saveProductsButton" class="primary" type="button">Save products</button>
-        </div>
       </section>
 
       <section class="grid">
@@ -123,33 +141,40 @@
 
       <section class="panel">
         <div class="section-heading">
-          <h2>Recent Sightings</h2>
+          <div>
+            <h2>Recent Sightings</h2>
+            <p class="section-note">Filter saved product sightings and export the visible set.</p>
+          </div>
           <span id="sightingCount" class="count">0</span>
         </div>
         <div class="sighting-filters">
-          <select id="filterAvailability">
-            <option value="">Any availability</option>
-            <option value="available">Available</option>
-            <option value="possible">Possible</option>
-            <option value="unavailable">Unavailable</option>
-          </select>
-          <select id="filterCondition">
-            <option value="">Any condition</option>
-            <option value="retail">Retail</option>
-            <option value="second_hand">Second-hand</option>
-            <option value="pre_owned">Pre-owned</option>
-            <option value="new">New</option>
-          </select>
-          <select id="filterConfidence">
-            <option value="">Any confidence</option>
-            <option value="high">High confidence</option>
-            <option value="medium">Medium confidence</option>
-            <option value="low">Low confidence</option>
-          </select>
-          <input id="filterMinPrice" type="number" min="0" step="1" placeholder="Min price">
-          <input id="filterMaxPrice" type="number" min="0" step="1" placeholder="Max price">
-          <button id="applySightingFilters" class="secondary" type="button">Apply</button>
-          <a id="exportSightings" class="button-link" href="/api/sightings.csv">Export CSV</a>
+          <div class="filter-controls">
+            <select id="filterAvailability">
+              <option value="">Any availability</option>
+              <option value="available">Available</option>
+              <option value="possible">Possible</option>
+              <option value="unavailable">Unavailable</option>
+            </select>
+            <select id="filterCondition">
+              <option value="">Any condition</option>
+              <option value="retail">Retail</option>
+              <option value="second_hand">Second-hand</option>
+              <option value="pre_owned">Pre-owned</option>
+              <option value="new">New</option>
+            </select>
+            <select id="filterConfidence">
+              <option value="">Any confidence</option>
+              <option value="high">High confidence</option>
+              <option value="medium">Medium confidence</option>
+              <option value="low">Low confidence</option>
+            </select>
+            <input id="filterMinPrice" type="number" min="0" step="1" placeholder="Min price">
+            <input id="filterMaxPrice" type="number" min="0" step="1" placeholder="Max price">
+          </div>
+          <div class="filter-actions">
+            <button id="applySightingFilters" class="secondary" type="button">Apply</button>
+            <a id="exportSightings" class="button-link" href="/api/sightings.csv">Export CSV</a>
+          </div>
         </div>
         <div id="sightings" class="sightings empty">No saved sightings yet.</div>
       </section>

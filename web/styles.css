@@ -117,6 +117,7 @@ button {
 .button-link {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   min-height: 36px;
   padding: 0 12px;
   border: 1px solid var(--line);
@@ -214,23 +215,65 @@ button:disabled {
 
 .admin-form {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr)) auto;
-  gap: 10px;
+  grid-template-columns: minmax(180px, 1.1fr) minmax(150px, 0.8fr) minmax(240px, 1.4fr);
+  gap: 14px;
+  align-items: end;
 }
 
-.admin-actions,
+.admin-form label {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  color: #536275;
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.admin-form label span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .sighting-filters {
   display: flex;
   flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  margin: 4px 0 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfd;
+}
+
+.filter-controls,
+.filter-actions,
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
   gap: 8px;
-  margin: 12px 0 16px;
+}
+
+.form-actions {
+  grid-column: 1 / -1;
+  justify-content: flex-end;
+  padding-top: 2px;
+}
+
+.filter-actions {
+  align-items: center;
+  justify-content: flex-end;
 }
 
 .sighting-filters input,
 .sighting-filters select {
   width: auto;
   min-width: 140px;
-  min-height: 38px;
+  min-height: 40px;
+  background: white;
+  font-size: 0.92rem;
 }
 
 .mini-button {
@@ -370,7 +413,7 @@ button:disabled {
 
 .section-heading {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 16px;
@@ -378,6 +421,13 @@ button:disabled {
 
 .section-heading h2 {
   margin-bottom: 0;
+}
+
+.section-note {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.4;
 }
 
 .count {
@@ -391,6 +441,20 @@ button:disabled {
   border-radius: 999px;
   color: var(--muted);
   font-size: 0.86rem;
+  font-weight: 900;
+}
+
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  padding: 0 11px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fbfcfd;
+  color: #415166;
+  font-size: 0.82rem;
   font-weight: 900;
 }
 
@@ -595,10 +659,11 @@ button:disabled {
 }
 
 .empty {
-  padding: 28px;
+  padding: 22px;
   border: 1px dashed var(--line);
   border-radius: 8px;
   color: var(--muted);
+  background: #fbfcfd;
   text-align: center;
 }
 
@@ -649,6 +714,17 @@ button:disabled {
 
   .admin-form {
     grid-template-columns: 1fr;
+  }
+
+  .form-actions,
+  .filter-actions {
+    justify-content: stretch;
+  }
+
+  .form-actions button,
+  .filter-actions button,
+  .filter-actions .button-link {
+    width: 100%;
   }
 
   .progress-label {
